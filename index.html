@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Magic Resulter — Hello Bhuvan</title>
+  <style>
+    :root{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;}
+    body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#071024;color:#e6eef8;margin:0;padding:18px}
+    .card{width:460px;max-width:96vw;background:rgba(255,255,255,0.03);border-radius:14px;padding:18px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    h1{text-align:center;font-size:22px;margin:0 0 14px;text-transform:uppercase}
+    label{display:block;font-size:13px;opacity:0.95;margin:8px 0 6px}
+    input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;font-size:14px}
+    .row{display:flex;gap:8px;margin-bottom:10px}
+    button{cursor:pointer;padding:10px;border-radius:10px;border:0;background:#10b981;color:#02121a;font-weight:700}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+    .small{font-size:13px}
+    .status{margin-top:8px;font-size:14px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>HELLO BHUVAN</h1>
+
+    <label>Enter Room Code</label>
+    <div class="row">
+      <input id="room" maxlength="6" placeholder="e.g. 1234" />
+      <button id="joinRoom">Join</button>
+    </div>
+
+    <div class="status">Status: <span id="resStatus">Not joined</span></div>
+  </div>
+
+  <script>
+    // ====== Firebase Config ======
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBW65q0kqTtTHgLEXz886wUgIgLtU-B4us",
+      authDomain: "magic-connect-561ba.firebaseapp.com",
+      databaseURL: "https://magic-connect-561ba-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "magic-connect-561ba",
+      storageBucket: "magic-connect-561ba.firebasestorage.app",
+      messagingSenderId: "358307279395",
+      appId: "1:358307279395:web:c9fae2ef0f3f97ba6e7796",
+      measurementId: "G-DF3DHMF1LS"
+    };
+    // ============================
+
+    function loadFirebaseSDK(cb){
+      if(window.firebase && window.firebase.database) return cb();
+      const s1 = document.createElement('script');
+      s1.src = 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js';
+      s1.onload = ()=>{
+        const s2 = document.createElement('script');
+        s2.src = 'https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js';
+        s2.onload = cb;
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s1);
+    }
+
+    const roomInput = document.getElementById('room');
+    const joinRoom = document.getElementById('joinRoom');
+    const resStatus = document.getElementById('resStatus');
+
+    let db = null;
+    let roomRef = null;
+
+    function initFirebase(cb){
+      loadFirebaseSDK(()=>{
+        if(!window.firebase.apps.length){
+          firebase.initializeApp(FIREBASE_CONFIG);
+        }
+        db = firebase.database();
+        cb();
+      });
+    }
+
+    joinRoom.onclick = ()=>{
+      const code = (roomInput.value||'').trim();
+      if(code.length<4){ alert('Code daalo (4 digits)'); return; }
+      initFirebase(()=>{
+        roomRef = db.ref('magic/' + code);
+        // mark joined
+        roomRef.update({joinedBy:true}).then(()=>{
+          resStatus.textContent = 'Joined — waiting';
+        });
+        // listen for search
+        roomRef.on('value', snap=>{
+          const v = snap.val();
+          if(v && v.search){
+            resStatus.textContent = 'Search received 👍';
+            const url = 'https://www.google.com/search?q=' + encodeURIComponent(v.search);
+            window.location.href = url; // open Google search
+          } else {
+            resStatus.textContent = 'Waiting for search...';
+          }
+        });
+      });
+    };
+  </script>
+</body>
+</html
